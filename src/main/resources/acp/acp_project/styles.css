@@ -1,0 +1,295 @@
+.root {
+    -fx-background-color: #f4f4f5;
+    -fx-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.custom-toolbar {
+    -fx-background-color: #e4e4e7;
+    -fx-padding: 5px;
+    -fx-spacing: 5px;
+}
+
+.icon-button {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-padding: 5px 10px;
+    -fx-font-size: 16px;
+}
+
+.icon-button:hover {
+    -fx-background-color: #d4d4d8;
+}
+
+.panel {
+    -fx-background-radius: 5px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);
+    -fx-padding: 20px;
+    -fx-background-insets: 10px;
+}
+
+.panel-white {
+    -fx-background-color: white;
+    -fx-background-radius: 5px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);
+}
+
+.panel-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 10 0;
+}
+
+.hot-folders-list .list-cell {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+    -fx-padding: 10px;
+    -fx-border-color: transparent transparent #e4e4e7 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.hot-folders-list .list-cell:empty {
+    -fx-border-width: 0;
+}
+
+.hot-folders-list .list-cell:selected {
+    -fx-background-color: #18181b;
+    -fx-text-fill: white;
+}
+
+.hot-folders-list .list-cell:hover:!selected {
+    -fx-background-color: #f0f0f0;
+}
+
+.folder-icon {
+    -fx-fill: black;
+    -fx-font-size: 20px;
+}
+
+.folder-name {
+    -fx-text-fill: black;
+}
+
+.hot-folders-list .list-cell:selected .folder-icon,
+.hot-folders-list .list-cell:selected .folder-name {
+    -fx-fill: white;
+    -fx-text-fill: white;
+}
+
+.task-cell, .action-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 5px;
+    -fx-padding: 10px;
+    -fx-border-color: #e4e4e7;
+    -fx-border-radius: 5px;
+}
+
+.list-cell:selected .task-cell,
+.list-cell:selected .action-cell {
+    -fx-background-color: #18181b;
+}
+.list-cell:selected .task-cell,
+.list-cell:selected .action-cell {
+    -fx-background-color: #18181b;
+}
+
+/* Style for buttons inside selected list cells */
+.list-cell:selected .task-cell .icon-button,
+.list-cell:selected .action-cell .icon-button {
+    -fx-background-color: white; /* White background for active buttons */
+    -fx-text-fill: black; /* Black text or icons */
+    -fx-border-color: transparent; /* Optional: Remove border if not needed */
+}
+
+/* Hover effect for active buttons */
+.list-cell:selected .task-cell .icon-button:hover,
+.list-cell:selected .action-cell .icon-button:hover {
+    -fx-background-color: #f3f4f6; /* Slightly lighter white on hover */
+    -fx-text-fill: black; /* Keep text or icons black */
+}
+
+.list-cell:selected .task-name,
+.list-cell:selected .task-status,
+.list-cell:selected .action-name,
+.list-cell:selected .action-job {
+    -fx-text-fill: white;
+}
+
+.task-name, .action-name {
+    -fx-font-weight: bold;
+}
+
+.task-status, .action-job {
+    -fx-text-fill: #71717a;
+}
+
+.edit-btn {
+    -fx-background-color: #93c5fd;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+}
+
+.edit-btn:hover {
+    -fx-background-color: #60a5fa;
+}
+
+.delete-btn {
+
+    -fx-background-color: #f87171;
+    -fx-text-fill: white;
+}
+.delete-btn,.icon-button-cells,.edit-btn{
+    -fx-padding: 5px 10px;
+    -fx-font-size: 12px;
+}
+.delete-btn:hover {
+    -fx-background-color: #ef4444;
+}
+
+.list-view {
+    -fx-background-color: transparent;
+    -fx-padding: 5px;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 5px 0;
+}
+
+.list-cell:selected {
+    -fx-background-color: transparent;
+}
+
+.section-header {
+    -fx-alignment: center-left;
+    -fx-padding: 10px 0;
+    -fx-spacing: 10px;
+}
+
+.section-header .label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.section-header .button {
+
+    -fx-padding: 5px 10px;
+    -fx-font-size: 10px;
+}
+
+.section-header .button:hover {
+    -fx-background-color: #d4d4d8;
+}
+
+.light-gray-bg {
+    -fx-background-color: #f4f4f5;
+}
+
+.icon-button-dark {
+    -fx-background-color: #18181b;
+    -fx-text-fill: white;
+}
+
+
+
+
+/* Default button styles for inactive task cells */
+.task-cell .icon-button-cells
+ {
+    -fx-background-color: #333333; /* Dark background */
+    -fx-text-fill: white; /* White text or icons */
+
+}
+
+/* Button styles when the task cell is active */
+.list-cell:selected .task-cell .icon-button-cells
+{
+    -fx-background-color: white; /* White background */
+    -fx-text-fill: black; /* Black text or icons */
+}
+
+/* Optional: Add hover effects for buttons in inactive task cells */
+.task-cell .icon-button-cells:hover
+{
+    -fx-background-color: #444444; /* Slightly lighter dark gray on hover */
+    -fx-text-fill: white; /* Retain white text/icons */
+}
+
+/* Optional: Add hover effects for buttons in active task cells */
+.list-cell:selected .task-cell .icon-button-cells:hover
+ {
+    -fx-background-color: #f3f3f3; /* Slightly lighter white */
+    -fx-text-fill: black; /* Retain black text/icons */
+}
+
+
+
+
+
+
+
+
+
+
+/* Default button styles for inactive cells */
+.action-cell .icon-button-cells {
+    -fx-background-color: #333333; /* Dark background */
+    -fx-text-fill: white; /* White text or icons */
+}
+
+/* Button styles when the cell is active */
+.list-cell:selected .action-cell .icon-button-cells
+{
+    -fx-background-color: white; /* White background */
+    -fx-text-fill: black; /* Black text or icons */
+}
+
+/* Optional: Add hover effects for buttons in inactive cells */
+.action-cell .icon-button-cells:hover
+ {
+    -fx-background-color: #444444; /* Slightly lighter dark gray on hover */
+    -fx-text-fill: white; /* Retain white text/icons */
+}
+
+/* Optional: Add hover effects for buttons in active cells */
+.list-cell:selected .action-cell .icon-button-cells:hover
+{
+    -fx-background-color: #f3f3f3; /* Slightly lighter white */
+    -fx-text-fill: black; /* Retain black text/icons */
+}
+
+
+
+
+
+.icon-button-light {
+    -fx-background-color: white;
+    -fx-text-fill: #18181b;
+}
+
+.icon-button-dark:hover {
+    -fx-background-color: #27272a;
+}
+
+.icon-button-light:hover {
+    -fx-background-color: #f4f4f5;
+}
+
+.add-button {
+    background-color: #000000;
+    text-fill: white;
+}
+
+.add-button:hover {
+    -fx-background-color: #333333;
+}
+
+.toggle-button-default {
+    -fx-background-color: #18181b;
+    -fx-text-fill: white;
+}
+
+.toggle-button-active {
+    -fx-background-color: white;
+    -fx-text-fill: #18181b;
+}
+
