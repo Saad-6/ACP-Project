@@ -1,48 +1,53 @@
 package acp.acp_project;
 
+import acp.acp_project.Code.ActionManager;
+import acp.acp_project.Code.HotFolderManager;
+import acp.acp_project.Code.TaskManager;
 import acp.acp_project.Entities.HotFolder;
 import acp.acp_project.Entities.Task;
 import acp.acp_project.Entities.Action;
 import acp.acp_project.Repository.GenericRepository;
+import acp.acp_project.UI.ToolbarDialog;
+import acp.acp_project.UI.Utility;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.scene.text.Text;
-
-import java.io.File;
 import java.util.List;
-import java.util.Optional;
+import static acp.acp_project.UI.Utility.*;
+
 
 public class FolderMillGUI extends Application {
-
-    // Unicode symbols for icons
-    private static final String FOLDER_ICON = "📁";
-    private static final String ADD_ICON = "➕";
-    private static final String PLAY_ICON = "▶";
-    private static final String PAUSE_ICON = "⏸";
-    private static final String SETTINGS_ICON = "⚙";
-    private static final String DELETE_ICON = "🗑";
-    private static final String EDIT_ICON = "✎";
 
     // Repos
     private final GenericRepository<HotFolder> folderRepo = new GenericRepository<>(HotFolder.class);
     private final GenericRepository<Task> taskRepo = new GenericRepository<>(Task.class);
     private final GenericRepository<Action> actionRepo = new GenericRepository<>(Action.class);
 
+    // Entity lists
     private ObservableList<HotFolder> hotFolders = FXCollections.observableArrayList();
     private ObservableList<Task> tasks = FXCollections.observableArrayList();
     private ObservableList<Action> actions = FXCollections.observableArrayList();
+
     private ListView<HotFolder> hotFoldersListView;
     private ListView<Task> tasksListView;
     private ListView<Action> actionsListView;
+
+    // Helper Classes
+    HotFolderManager folderManager = new HotFolderManager();
+    ActionManager actionManager = new ActionManager();
+    TaskManager taskManager = new TaskManager();
+
+
+    // UI Classes
+    ToolbarDialog toolbarDialog = new ToolbarDialog();
+
 
     public static void main(String[] args) {
         launch(args);
@@ -55,7 +60,7 @@ public class FolderMillGUI extends Application {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("light-gray-bg");
-        root.setTop(createToolbar());
+        root.setTop(toolbarDialog.createToolbar());
         root.setLeft(createHotFoldersPanel());
         root.setCenter(createTasksPanel());
         root.setRight(createActionsPanel());
@@ -68,33 +73,6 @@ public class FolderMillGUI extends Application {
         loadRealData();
     }
 
-    private Button createIconButton(String unicode, String tooltip, String styleClass) {
-        Button button = new Button(unicode);
-        button.setTooltip(new Tooltip(tooltip));
-        button.getStyleClass().add(styleClass);
-        return button;
-    }
-
-    private ToolBar createToolbar() {
-        Button addFolderBtn = createIconButton(FOLDER_ICON, "Add Folder", "icon-button-light");
-        Button addTaskBtn = createIconButton(ADD_ICON, "Add Task", "icon-button-light");
-        Button startBtn = createIconButton(PLAY_ICON, "Start", "icon-button-light");
-        Button pauseBtn = createIconButton(PAUSE_ICON, "Pause", "icon-button-light");
-        Button settingsBtn = createIconButton(SETTINGS_ICON, "Settings", "icon-button-light");
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search...");
-
-        addFolderBtn.setOnAction(e -> selectFolder());
-        addTaskBtn.setOnAction(e -> showCreateTaskDialog());
-        startBtn.setOnAction(e -> showAlert("Start clicked"));
-        pauseBtn.setOnAction(e -> showAlert("Pause clicked"));
-        settingsBtn.setOnAction(e -> showAlert("Settings clicked"));
-        searchField.setOnAction(e -> showAlert("Search: " + searchField.getText()));
-
-        ToolBar toolBar = new ToolBar(addFolderBtn, addTaskBtn, startBtn, pauseBtn, settingsBtn, searchField);
-        toolBar.getStyleClass().add("custom-toolbar");
-        return toolBar;
-    }
 
     private VBox createHotFoldersPanel() {
         VBox panel = new VBox();
@@ -130,30 +108,10 @@ public class FolderMillGUI extends Application {
     }
 
     private void selectFolder() {
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select Hot Folder");
 
-        File selectedDirectory = directoryChooser.showDialog(hotFoldersListView.getScene().getWindow());
+        hotFolders.add(folderManager.AddHotFolder());
+        hotFoldersListView.refresh();
 
-        if (selectedDirectory != null) {
-            String folderPath = selectedDirectory.getAbsolutePath();
-
-            if (selectedDirectory.exists() && selectedDirectory.isDirectory()) {
-                HotFolder newHotFolder = new HotFolder();
-                newHotFolder.setPath(folderPath);
-
-                try {
-                    HotFolder savedHotFolder = folderRepo.create(newHotFolder);
-                    hotFolders.add(savedHotFolder);
-                    showAlert("The folder has been successfully added: " + folderPath);
-                } catch (Exception e) {
-                    showAlert("Failed to add the hot folder: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            } else {
-                showAlert("The selected folder does not exist or is not a directory.");
-            }
-        }
     }
 
     private Callback<ListView<HotFolder>, ListCell<HotFolder>> createHotFolderCellFactory() {
@@ -337,14 +295,6 @@ public class FolderMillGUI extends Application {
         hotFolders.setAll(allHotFolders);
     }
 
-    private void showAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Action Triggered");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
     private void showCreateTaskDialog() {
         HotFolder selectedHotFolder = hotFoldersListView.getSelectionModel().getSelectedItem();
         if (selectedHotFolder == null) {
@@ -392,44 +342,38 @@ public class FolderMillGUI extends Application {
     }
 
     private void showDeleteConfirmation(Object item) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Confirm Delete");
-        alert.setHeaderText("Are you sure you want to delete this item?");
-        alert.setContentText("This action cannot be undone.");
 
-        Optional<ButtonType> result = alert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            if (item instanceof Task) {
-                deleteTask((Task) item);
-            } else if (item instanceof Action) {
-                deleteAction((Action) item);
-            }
+        Task task;
+        Action action;
+        if(item instanceof Task){
+            task = (Task)item;
+            Utility.showDeleteConfirmation(item, () -> deleteTask(task), () -> deleteAction(new Action()));
+
+        }else if(item instanceof Action){
+            action = (Action)item;
+            Utility.showDeleteConfirmation(item, () -> deleteTask(new Task()), () -> deleteAction(action));
         }
     }
 
     private void deleteTask(Task task) {
-        try {
-            taskRepo.delete(task.getId());
+        if(taskManager.delete(task)){
+            showAlert("Task deleted successfully: " + task.getTaskName());
             tasks.remove(task);
             tasksListView.refresh();
-            showAlert("Task deleted successfully: " + task.getTaskName());
-        } catch (Exception e) {
-            showAlert("Failed to delete task: " + e.getMessage());
-            e.printStackTrace();
+        }
+        else{
+            showAlert("Failed to delete task: ");
         }
     }
 
     private void deleteAction(Action action) {
-        try {
-            actionRepo.delete(action.getId());
-            Task parentTask = action.getTask();
-            parentTask.removeAction(action);
-            updateActionsListView(parentTask);
-            tasksListView.refresh();
+        if(actionManager.delete(action)){
             showAlert("Action deleted successfully: " + action.getActionName());
-        } catch (Exception e) {
-            showAlert("Failed to delete action: " + e.getMessage());
-            e.printStackTrace();
+            actions.remove(action);
+            actionsListView.refresh();
+        }
+        else{
+            showAlert("Failed to delete action: ");
         }
     }
 }
