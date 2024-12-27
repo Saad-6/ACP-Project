@@ -5,7 +5,7 @@
 <hibernate-configuration>
     <session-factory>
         <property name="hibernate.connection.driver_class">com.microsoft.sqlserver.jdbc.SQLServerDriver</property>
-        <property name="hibernate.connection.url">jdbc:sqlserver://DESKTOP-F925KJB:1433;Database=HotelDb;encrypt=true;trustServerCertificate=true;</property>
+        <property name="hibernate.connection.url">jdbc:sqlserver://DESKTOP-1DC06G3\\SQLEXPRESS:1433;Database=HotelDb;encrypt=true;trustServerCertificate=true;</property>
         <property name="hibernate.connection.username">user</property>
         <property name="hibernate.connection.password">testuser</property>
         <property name="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</property>

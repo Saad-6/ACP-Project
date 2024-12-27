@@ -4,6 +4,7 @@ import acp.acp_project.Entities.Action;
 import acp.acp_project.Models.*;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
@@ -19,13 +20,15 @@ public class CreateActionDialog extends Dialog<Action> {
     private TextField outputFolderField;
     private ComboBox<String> fileTypeComboBox;
     private ComboBox<String> actionComboBox;
+    private final Action existingAction;
 
-    public CreateActionDialog(String taskOutputPath) {
-        setTitle("Create New Action");
-        setHeaderText("Please enter the details for the new action.");
+    public CreateActionDialog(String taskOutputPath, Action action) {
+        this.existingAction = action;
+        setTitle(action == null ? "Create New Action" : "Edit Action");
+        setHeaderText("Please enter the details for the action.");
 
-        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
-        getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
+        ButtonType actionButtonType = new ButtonType(action == null ? "Create" : "Save", ButtonBar.ButtonData.OK_DONE);
+        getDialogPane().getButtonTypes().addAll(actionButtonType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -39,13 +42,22 @@ public class CreateActionDialog extends Dialog<Action> {
         outputFolderField.setText(taskOutputPath + "/[action-name]");
 
         fileTypeComboBox = new ComboBox<>();
-        fileTypeComboBox.getItems().addAll("All Files", "JPEG", "PNG","JPG","ZIP", "Word", "PDF", "Text");
+        fileTypeComboBox.getItems().addAll("All Files", "JPEG", "PNG", "JPG", "ZIP", "Word", "PDF", "Text");
         fileTypeComboBox.setValue("All Files");
         styleComboBox(fileTypeComboBox);
 
         actionComboBox = new ComboBox<>();
         styleComboBox(actionComboBox);
-        updateActionComboBox("All Files");
+
+        if (action != null) {
+            nameField.setText(action.getActionName());
+            outputFolderField.setText(action.getOutputFolder());
+            fileTypeComboBox.setValue(action.selectedFileAndAction.selectedFileType);
+            updateActionComboBox(action.selectedFileAndAction.selectedFileType);
+            actionComboBox.setValue(action.selectedFileAndAction.selectedAction);
+        } else {
+            updateActionComboBox("All Files");
+        }
 
         fileTypeComboBox.setOnAction(e -> updateActionComboBox(fileTypeComboBox.getValue()));
 
@@ -59,15 +71,23 @@ public class CreateActionDialog extends Dialog<Action> {
         grid.add(actionComboBox, 1, 3);
 
         getDialogPane().setContent(grid);
+        loadStylesheet();
 
         setResultConverter(dialogButton -> {
-            if (dialogButton == createButtonType) {
-                return new Action(
-                        nameField.getText(),
-                        outputFolderField.getText(),
-                        true,
-                        new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue())
-                );
+            if (dialogButton == actionButtonType) {
+                if (existingAction == null) {
+                    return new Action(
+                            nameField.getText(),
+                            outputFolderField.getText(),
+                            true,
+                            new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue())
+                    );
+                } else {
+                    existingAction.setActionName(nameField.getText());
+                    existingAction.setOutputFolder(outputFolderField.getText());
+                    existingAction.selectedFileAndAction = new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue());
+                    return existingAction;
+                }
             }
             return null;
         });
@@ -90,11 +110,21 @@ public class CreateActionDialog extends Dialog<Action> {
                     setText(null);
                 } else {
                     setText(item);
+                    setTextFill(Color.BLACK);
                 }
-                //setBackground(javafx.scene.layout.Background(Color.WHITE));
             }
         });
+
+        comboBox.getStyleClass().add("custom-combo-box");
     }
+
+    private void loadStylesheet() {
+        Scene scene = getDialogPane().getScene();
+        if (scene != null) {
+            scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+        }
+    }
+
 
     private void updateActionComboBox(String fileType) {
         List<String> actions = new ArrayList<>(Arrays.stream(GenericActions.values())
@@ -102,16 +132,16 @@ public class CreateActionDialog extends Dialog<Action> {
                 .collect(Collectors.toList()));
 
         if (!fileType.equals("All Files")) {
-            File selectedFile;
+            File selectedFile = null;
             switch (fileType) {
                 case "JPEG":
                     selectedFile = new jpegFile();
                     break;
-                case "PNG":
-                    selectedFile = new pngFile();
-                    break;
                 case "JPG":
                     selectedFile = new jpgFile();
+                    break;
+                case "PNG":
+                    selectedFile = new pngFile();
                     break;
                 case "Word":
                     selectedFile = new wordFile();
@@ -129,17 +159,23 @@ public class CreateActionDialog extends Dialog<Action> {
                     throw new IllegalStateException("Unexpected value: " + fileType);
             }
 
-
             EnumSet<SpecificActions> specificActions = EnumSet.noneOf(SpecificActions.class);
             if (selectedFile instanceof pngFile) {
                 specificActions = ((pngFile) selectedFile).specificActions;
+            } else if (selectedFile instanceof jpgFile) {
+                specificActions = ((jpgFile) selectedFile).specificActions;
+            } else if (selectedFile instanceof jpegFile) {
+                specificActions = ((jpegFile) selectedFile).specificActions;
             } else if (selectedFile instanceof wordFile) {
                 specificActions = ((wordFile) selectedFile).specificActions;
             } else if (selectedFile instanceof pdfFile) {
                 specificActions = ((pdfFile) selectedFile).specificActions;
             } else if (selectedFile instanceof textFile) {
                 specificActions = ((textFile) selectedFile).specificActions;
+            } else if (selectedFile instanceof zipFile) {
+                specificActions = ((zipFile) selectedFile).specificActions;
             }
+
 
             actions.addAll(specificActions.stream()
                     .map(Enum::name)
@@ -152,3 +188,4 @@ public class CreateActionDialog extends Dialog<Action> {
         }
     }
 }
+

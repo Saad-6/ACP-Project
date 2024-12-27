@@ -54,7 +54,12 @@ public class Action {
     public Task getTask() {
         return task;
     }
-
+public String getOutputFolder(){
+        return  outputFolderName;
+}
+public void setOutputFolder(String newFolderName){
+        this.outputFolderName = newFolderName;
+}
     public void setTask(Task task) {
         this.task = task;
     }

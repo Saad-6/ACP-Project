@@ -15,16 +15,16 @@ public class CreateTaskDialog extends Dialog<Task> {
     private final TextField hotFolderField = new TextField();
     private final List<TextField> actionFields = new ArrayList<>();
     private final VBox actionsContainer = new VBox(10);
+    private final Task existingTask;
 
-    public CreateTaskDialog(String hotFolder) {
-        setTitle("Create New Task");
+    public CreateTaskDialog(String hotFolder, Task task) {
+        this.existingTask = task;
+        setTitle(task == null ? "Create New Task" : "Edit Task");
         setHeaderText(null);
 
-        // Set the button types
-        ButtonType createButtonType = new ButtonType("Create", ButtonBar.ButtonData.OK_DONE);
-        getDialogPane().getButtonTypes().addAll(createButtonType, ButtonType.CANCEL);
+        ButtonType actionButtonType = new ButtonType(task == null ? "Create" : "Save", ButtonBar.ButtonData.OK_DONE);
+        getDialogPane().getButtonTypes().addAll(actionButtonType, ButtonType.CANCEL);
 
-        // Create the content grid
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -34,6 +34,10 @@ public class CreateTaskDialog extends Dialog<Task> {
         hotFolderField.setEditable(false);
         hotFolderField.getStyleClass().add("read-only-field");
 
+        if (task != null) {
+            taskNameField.setText(task.getTaskName());
+        }
+
         grid.add(new Label("Hot Folder:"), 0, 0);
         grid.add(hotFolderField, 1, 0);
         grid.add(new Label("Task Name:"), 0, 1);
@@ -41,23 +45,22 @@ public class CreateTaskDialog extends Dialog<Task> {
 
         getDialogPane().setContent(grid);
 
-        // Request focus on the task name field by default
         Platform.runLater(() -> taskNameField.requestFocus());
 
-        // Convert the result to a Task object when the create button is clicked
         setResultConverter(dialogButton -> {
-            if (dialogButton == createButtonType) {
-                Task newTask = new Task(taskNameField.getText(), false);
-
-                return newTask;
+            if (dialogButton == actionButtonType) {
+                if (existingTask == null) {
+                    return new Task(taskNameField.getText(), false);
+                } else {
+                    existingTask.setTaskName(taskNameField.getText());
+                    return existingTask;
+                }
             }
             return null;
         });
 
-        // Apply custom styles
         getDialogPane().getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
         getDialogPane().getStyleClass().add("custom-dialog");
     }
-
 }
 

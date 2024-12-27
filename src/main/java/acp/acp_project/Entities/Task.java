@@ -19,7 +19,7 @@ public class Task {
     @JoinColumn(name = "hot_folder_id", nullable = false)
     private HotFolder hotFolder;
 
-    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "task", orphanRemoval = true,fetch = FetchType.EAGER)
     private List<Action> actions = new ArrayList<>();
 
     public Task() {}

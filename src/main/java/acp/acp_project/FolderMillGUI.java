@@ -22,7 +22,6 @@ import javafx.scene.text.Text;
 import java.util.List;
 import static acp.acp_project.UI.Utility.*;
 
-
 public class FolderMillGUI extends Application {
 
     // Repos
@@ -35,6 +34,7 @@ public class FolderMillGUI extends Application {
     private ObservableList<Task> tasks = FXCollections.observableArrayList();
     private ObservableList<Action> actions = FXCollections.observableArrayList();
 
+    // List Views
     private ListView<HotFolder> hotFoldersListView;
     private ListView<Task> tasksListView;
     private ListView<Action> actionsListView;
@@ -195,6 +195,7 @@ public class FolderMillGUI extends Application {
                         updateItem(task, false);
                     });
                     Button editButton = createIconButton(EDIT_ICON, "Edit", "edit-btn");
+                    editButton.setOnAction(e -> showEditTaskDialog(task));
                     Button deleteButton = createIconButton(DELETE_ICON, "Delete", "delete-btn");
                     deleteButton.setOnAction(e -> showDeleteConfirmation(task));
 
@@ -259,6 +260,7 @@ public class FolderMillGUI extends Application {
                         updateItem(action, false);
                     });
                     Button editButton = createIconButton(EDIT_ICON, "Edit", "edit-btn");
+                    editButton.setOnAction(e -> showEditActionDialog(action));
                     Button deleteButton = createIconButton(DELETE_ICON, "Delete", "delete-btn");
                     deleteButton.setOnAction(e -> showDeleteConfirmation(action));
 
@@ -270,6 +272,55 @@ public class FolderMillGUI extends Application {
                 }
             }
         };
+    }
+    private void showEditTaskDialog(Task task) {
+        HotFolder selectedHotFolder = hotFoldersListView.getSelectionModel().getSelectedItem();
+        if (selectedHotFolder == null) {
+            showAlert("Error: Hot Folder not selected.");
+            return;
+        }
+
+        CreateTaskDialog dialog = new CreateTaskDialog(selectedHotFolder.getPath(), task);
+        dialog.initOwner(tasksListView.getScene().getWindow());
+        dialog.showAndWait().ifPresent(updatedTask -> {
+            try {
+                taskRepo.update(updatedTask);
+                int index = tasks.indexOf(task);
+                if (index != -1) {
+                    tasks.set(index, updatedTask);
+                }
+                tasksListView.refresh();
+                showAlert("Task updated successfully: " + updatedTask.getTaskName());
+            } catch (Exception e) {
+                showAlert("Failed to update task: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void showEditActionDialog(Action action) {
+        Task selectedTask = tasksListView.getSelectionModel().getSelectedItem();
+        if (selectedTask == null) {
+            showAlert("Error: Task not selected.");
+            return;
+        }
+
+        CreateActionDialog dialog = new CreateActionDialog(selectedTask.getHotFolder().getPath(), action);
+        dialog.initOwner(actionsListView.getScene().getWindow());
+        dialog.showAndWait().ifPresent(updatedAction -> {
+            try {
+                actionRepo.update(updatedAction);
+                int index = actions.indexOf(action);
+                if (index != -1) {
+                    actions.set(index, updatedAction);
+                }
+                actionsListView.refresh();
+                showAlert("Action updated successfully: " + updatedAction.getActionName());
+            } catch (Exception e) {
+                showAlert("Failed to update action: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 
     private void updateTasksList(HotFolder selectedHotFolder) {
@@ -302,7 +353,7 @@ public class FolderMillGUI extends Application {
             return;
         }
 
-        CreateTaskDialog dialog = new CreateTaskDialog(selectedHotFolder.getPath());
+        CreateTaskDialog dialog = new CreateTaskDialog(selectedHotFolder.getPath(),null);
         dialog.initOwner(hotFoldersListView.getScene().getWindow());
         dialog.showAndWait().ifPresent(task -> {
             task.setHotFolder(selectedHotFolder);
@@ -324,7 +375,7 @@ public class FolderMillGUI extends Application {
             showAlert("Please select a Task first.");
             return;
         }
-        CreateActionDialog dialog = new CreateActionDialog(selectedTask.getHotFolder().getPath());
+        CreateActionDialog dialog = new CreateActionDialog(selectedTask.getHotFolder().getPath(),null);
         dialog.initOwner(hotFoldersListView.getScene().getWindow());
         dialog.showAndWait().ifPresent(action -> {
             action.setTask(selectedTask);

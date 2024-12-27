@@ -292,4 +292,48 @@
     -fx-background-color: white;
     -fx-text-fill: #18181b;
 }
+.custom-combo-box .list-cell {
+    -fx-background-color: white;
+    -fx-text-fill: black;
+}
+
+.custom-combo-box .list-view {
+    -fx-background-color: black;
+}
+
+.custom-combo-box .list-view .list-cell {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+}
+
+.custom-combo-box .list-view .list-cell:hover {
+    -fx-background-color: #404040;
+}
+
+.custom-combo-box .list-view .list-cell:selected {
+    -fx-background-color: #606060;
+}
+
+/* Keep the arrow button styling consistent */
+.custom-combo-box .arrow-button {
+    -fx-background-color: white;
+}
+
+.custom-combo-box .arrow {
+    -fx-background-color: black;
+}
+.custom-toolbar {
+    -fx-padding: 10px;
+    -fx-background-color: #f0f0f0;
+}
+
+.icon-button-large {
+    -fx-min-width: 100px;
+    -fx-min-height: 50px;
+    -fx-font-size: 16px;
+}
+
+.icon-button-large .ikonli-font-icon {
+    -fx-icon-size: 24px;
+}
 
