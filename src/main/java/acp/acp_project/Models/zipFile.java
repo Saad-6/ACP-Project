@@ -8,7 +8,7 @@ public class zipFile extends File{
     public EnumSet<SpecificActions> specificActions;
 
     public zipFile(){
-        super("Zip File",".zip");
+        super("Zip File","zip");
         this.genericActions = EnumSet.allOf(GenericActions.class);
         this.specificActions = EnumSet.noneOf(SpecificActions.class);
         this.specificActions.add(SpecificActions.EXTRACT_FILES);

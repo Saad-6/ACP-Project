@@ -1,5 +1,6 @@
 package acp.acp_project.UI;
 
+import acp.acp_project.Domain.Response;
 import acp.acp_project.Entities.Action;
 import acp.acp_project.Entities.HotFolder;
 import acp.acp_project.Entities.Task;
@@ -11,6 +12,9 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class Utility {
@@ -40,6 +44,63 @@ public class Utility {
             return selectedDirectory.getAbsolutePath();
         } else {
             return null; // No folder selected
+        }
+    }
+    public static List<File> prepareFiles(Action action){
+
+        String fileType = action.selectedFileAndAction.selectedFileType;
+        fileType = getExtensionFromFileName(fileType);
+        File rootDirectory = new File(action.getTask().getHotFolder().getPath());
+        if(rootDirectory == null){
+           return  new ArrayList<>();
+        }
+
+        List<File> filesToBeSentToTheGulag = findFiles(rootDirectory,fileType);
+        return filesToBeSentToTheGulag;
+    }
+    public static List<File> findFiles(File directory, String fileType) {
+        List<File> matchingFiles = new ArrayList<>();
+        File[] files = directory.listFiles();
+
+        if (files == null) {
+            return matchingFiles;
+        }
+
+        if (!"all".equals(fileType)) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().endsWith("." + fileType)) {
+                    matchingFiles.add(file);
+                } else if (file.isDirectory()) {
+                    matchingFiles.addAll(findFiles(file, fileType)); // Recursively search subdirectories
+                }
+            }
+        } else {
+            for (File file : files) {
+                if (file.isFile()) {
+                    matchingFiles.add(file);
+                } else if (file.isDirectory()) {
+                    matchingFiles.addAll(findFiles(file, fileType)); // Recursively add all files in subdirectories
+                }
+            }
+        }
+
+        return matchingFiles;
+    }
+    public static String getExtensionFromFileName(String fileName) {
+        switch (fileName.toLowerCase()) {
+            case "jpeg":
+            case "jpg":
+            case "png":
+            case "zip":
+                return fileName.toLowerCase();
+            case "word":
+                return "docx";
+            case "pdf":
+                return "pdf";
+            case "text":
+                return "txt";
+            default:
+                return "all";
         }
     }
     public static void showDeleteConfirmation(Object item, Runnable deleteTask, Runnable deleteAction) {

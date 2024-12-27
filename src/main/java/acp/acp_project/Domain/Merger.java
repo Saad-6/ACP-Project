@@ -3,7 +3,7 @@ package acp.acp_project.Domain;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
-
+import static acp.acp_project.UI.Utility.*;
 public class Merger {
     private final String fileType;
 
@@ -19,7 +19,7 @@ public class Merger {
             return false;
         }
 
-        List<File> filesToMerge = findFiles(rootDirectory);
+        List<File> filesToMerge = findFiles(rootDirectory,"");
 
         if (filesToMerge.isEmpty()) {
             System.out.println("No " + fileType + " files found in the specified directory.");
@@ -29,24 +29,7 @@ public class Merger {
         return mergeFiles(filesToMerge, outputFilePath);
     }
 
-    private List<File> findFiles(File directory) {
-        List<File> matchingFiles = new ArrayList<>();
-        File[] files = directory.listFiles();
 
-        if (files == null) {
-            return matchingFiles;
-        }
-
-        for (File file : files) {
-            if (file.isFile() && file.getName().endsWith("." + fileType)) {
-                matchingFiles.add(file);
-            } else if (file.isDirectory()) {
-                matchingFiles.addAll(findFiles(file)); // Recursively search subdirectories
-            }
-        }
-
-        return matchingFiles;
-    }
 
     private boolean mergeFiles(List<File> files, String outputFilePath) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {

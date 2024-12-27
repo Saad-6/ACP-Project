@@ -8,7 +8,7 @@ public class pngFile  extends  File{
     public EnumSet<SpecificActions> specificActions;
 
     public pngFile(){
-        super("Image",".png");
+        super("Image","png");
         this.genericActions = EnumSet.allOf(GenericActions.class);
         this.specificActions = EnumSet.noneOf(SpecificActions.class);
 //        this.specificActions = EnumSet.noneOf(SpecificActions.class);

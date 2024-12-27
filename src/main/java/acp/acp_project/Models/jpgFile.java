@@ -8,7 +8,7 @@ public class jpgFile extends File{
     public EnumSet<SpecificActions> specificActions;
 
     public jpgFile(){
-        super("Image",".jpg");
+        super("Image","jpg");
         this.genericActions = EnumSet.allOf(GenericActions.class);
         this.specificActions = EnumSet.noneOf(SpecificActions.class);
         this.specificActions.add(SpecificActions.REDUCE_IMAGE_SIZE);

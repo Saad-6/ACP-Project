@@ -8,7 +8,7 @@ public class wordFile extends File {
     public EnumSet<SpecificActions> specificActions;
 
     public wordFile(){
-        super("Word Document",".docx");
+        super("Word Document","docx");
         this.genericActions = EnumSet.allOf(GenericActions.class);
         this.specificActions = EnumSet.noneOf(SpecificActions.class);
         this.specificActions.add(SpecificActions.FIND_AND_REPLACE);

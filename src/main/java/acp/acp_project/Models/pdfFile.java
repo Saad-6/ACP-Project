@@ -8,7 +8,7 @@ public class pdfFile extends File {
     public EnumSet<SpecificActions> specificActions;
 
     public pdfFile(){
-        super("PDF",".pdf");
+        super("PDF","pdf");
         this.genericActions = EnumSet.allOf(GenericActions.class);
         this.specificActions = EnumSet.noneOf(SpecificActions.class);
         this.specificActions.add(SpecificActions.MERGE);

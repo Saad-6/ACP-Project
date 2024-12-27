@@ -3,6 +3,7 @@ package acp.acp_project;
 import acp.acp_project.Code.ActionManager;
 import acp.acp_project.Code.HotFolderManager;
 import acp.acp_project.Code.TaskManager;
+import acp.acp_project.Domain.Response;
 import acp.acp_project.Entities.HotFolder;
 import acp.acp_project.Entities.Task;
 import acp.acp_project.Entities.Action;
@@ -60,7 +61,7 @@ public class FolderMillGUI extends Application {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("light-gray-bg");
-        root.setTop(toolbarDialog.createToolbar());
+        root.setTop(createToolbar());
         root.setLeft(createHotFoldersPanel());
         root.setCenter(createTasksPanel());
         root.setRight(createActionsPanel());
@@ -166,6 +167,43 @@ public class FolderMillGUI extends Application {
         return panel;
     }
 
+    private ToolBar createToolbar() {
+        Button addFolderBtn = createIconButton(FOLDER_ICON, "Add Folder", "icon-button-light");
+        Button addTaskBtn = createIconButton(ADD_ICON, "Add Task", "icon-button-light");
+        Button startBtn = createIconButton(PLAY_ICON, "Start/Pause", "icon-button-light");
+        Button settingsBtn = createIconButton(SETTINGS_ICON, "Settings", "icon-button-light");
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search...");
+
+        addFolderBtn.setOnAction(e -> selectFolder());
+        addTaskBtn.setOnAction(e -> showCreateTaskDialog());
+        startBtn.setOnAction(e -> toggleSelectedTask());
+        settingsBtn.setOnAction(e -> {/* Implement settings action */});
+        searchField.setOnAction(e -> {/* Implement search action */});
+
+        ToolBar toolBar = new ToolBar(addFolderBtn, addTaskBtn, startBtn, settingsBtn, searchField);
+        toolBar.getStyleClass().add("custom-toolbar");
+        return toolBar;
+    }
+
+    private void toggleSelectedTask() {
+        Task selectedTask = tasksListView.getSelectionModel().getSelectedItem();
+        if (selectedTask == null) {
+            showAlert("Please select a task first.");
+            return;
+        }
+
+        Response response = taskManager.runTask(selectedTask);
+        if (response.success) {
+            selectedTask.toggleStatus();
+            taskRepo.update(selectedTask);
+            tasksListView.refresh();
+            showAlert(response.Message);
+        } else {
+            showAlert("Failed to run task: " + response.Message);
+        }
+    }
+
     private Callback<ListView<Task>, ListCell<Task>> createTaskCellFactory() {
         return listView -> new ListCell<Task>() {
             @Override
@@ -184,16 +222,6 @@ public class FolderMillGUI extends Application {
                     nameLabel.getStyleClass().add("task-name");
                     Label statusLabel = new Label(task.getStatus());
                     statusLabel.getStyleClass().add("task-status");
-                    Button toggleBtn = createIconButton(
-                            task.getStatus().equals("Active") ? PAUSE_ICON : PLAY_ICON,
-                            task.getStatus().equals("Active") ? "Pause" : "Start",
-                            "icon-button-cells"
-                    );
-                    toggleBtn.setOnAction(e -> {
-                        task.toggleStatus();
-                        taskRepo.update(task);
-                        updateItem(task, false);
-                    });
                     Button editButton = createIconButton(EDIT_ICON, "Edit", "edit-btn");
                     editButton.setOnAction(e -> showEditTaskDialog(task));
                     Button deleteButton = createIconButton(DELETE_ICON, "Delete", "delete-btn");
@@ -202,7 +230,7 @@ public class FolderMillGUI extends Application {
                     Region spacer = new Region();
                     HBox.setHgrow(spacer, Priority.ALWAYS);
 
-                    header.getChildren().addAll(nameLabel, statusLabel, spacer, toggleBtn, editButton, deleteButton);
+                    header.getChildren().addAll(nameLabel, statusLabel, spacer, editButton, deleteButton);
 
                     vbox.getChildren().add(header);
                     setGraphic(vbox);
@@ -210,6 +238,7 @@ public class FolderMillGUI extends Application {
             }
         };
     }
+
 
     private VBox createActionsPanel() {
         VBox panel = new VBox(10);
@@ -407,24 +436,26 @@ public class FolderMillGUI extends Application {
     }
 
     private void deleteTask(Task task) {
-        if(taskManager.delete(task)){
+        var response = taskManager.delete(task);
+        if(response.success){
             showAlert("Task deleted successfully: " + task.getTaskName());
             tasks.remove(task);
             tasksListView.refresh();
         }
         else{
-            showAlert("Failed to delete task: ");
+            showAlert("Failed to delete task: " + response.Message);
         }
     }
 
     private void deleteAction(Action action) {
-        if(actionManager.delete(action)){
+        var response = actionManager.delete(action);
+        if(response.success){
             showAlert("Action deleted successfully: " + action.getActionName());
             actions.remove(action);
             actionsListView.refresh();
         }
         else{
-            showAlert("Failed to delete action: ");
+            showAlert("Failed to delete action: " + response.Message );
         }
     }
 }

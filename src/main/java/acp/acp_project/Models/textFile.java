@@ -10,7 +10,7 @@ public EnumSet<GenericActions> genericActions;
 public EnumSet<SpecificActions> specificActions;
 
 public textFile(){
-    super("Text File",".txt");
+    super("Text File","txt");
     this.genericActions = EnumSet.allOf(GenericActions.class);
     this.specificActions = EnumSet.noneOf(SpecificActions.class);
     this.specificActions.add(SpecificActions.FIND_AND_REPLACE);
