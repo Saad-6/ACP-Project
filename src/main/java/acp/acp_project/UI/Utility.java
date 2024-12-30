@@ -46,6 +46,19 @@ public class Utility {
             return null; // No folder selected
         }
     }
+    // Helper method to extract the file name without the extension
+    public static String getFileNameWithoutExtension(String fileName) {
+        int dotIndex = fileName.lastIndexOf('.');
+        return (dotIndex > 0) ? fileName.substring(0, dotIndex) : fileName;
+    }
+
+    // Helper method to extract the file extension
+    public static String getFileExtension(File file) {
+        String fileName = file.getName();
+        int dotIndex = fileName.lastIndexOf('.');
+        return (dotIndex > 0) ? fileName.substring(dotIndex + 1) : "";
+    }
+
     public static List<File> prepareFiles(Action action){
 
         String fileType = action.selectedFileAndAction.selectedFileType;
@@ -57,6 +70,17 @@ public class Utility {
 
         List<File> filesToBeSentToTheGulag = findFiles(rootDirectory,fileType);
         return filesToBeSentToTheGulag;
+    }
+    public static void ensureDirectoryExists(String destinationPath){
+        File destinationDirectory = new File(destinationPath);
+        if (!destinationDirectory.exists()) {
+            boolean created = destinationDirectory.mkdirs(); // Create the directory and any necessary parent directories
+            if (created) {
+                System.out.println("Directory created: " + destinationPath);
+            } else {
+                System.err.println("Failed to create directory: " + destinationPath);
+            }
+        }
     }
     public static List<File> findFiles(File directory, String fileType) {
         List<File> matchingFiles = new ArrayList<>();
@@ -89,8 +113,11 @@ public class Utility {
     public static String getExtensionFromFileName(String fileName) {
         switch (fileName.toLowerCase()) {
             case "jpeg":
+                return fileName.toLowerCase();
             case "jpg":
+                return fileName.toLowerCase();
             case "png":
+                return fileName.toLowerCase();
             case "zip":
                 return fileName.toLowerCase();
             case "word":
@@ -99,6 +126,8 @@ public class Utility {
                 return "pdf";
             case "text":
                 return "txt";
+            case "txt":
+                return fileName.toLowerCase();
             default:
                 return "all";
         }

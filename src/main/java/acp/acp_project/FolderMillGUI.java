@@ -8,7 +8,7 @@ import acp.acp_project.Entities.HotFolder;
 import acp.acp_project.Entities.Task;
 import acp.acp_project.Entities.Action;
 import acp.acp_project.Repository.GenericRepository;
-import acp.acp_project.UI.ToolbarDialog;
+import acp.acp_project.UI.HotFolderManagerDialog;
 import acp.acp_project.UI.Utility;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -47,7 +47,6 @@ public class FolderMillGUI extends Application {
 
 
     // UI Classes
-    ToolbarDialog toolbarDialog = new ToolbarDialog();
 
 
     public static void main(String[] args) {
@@ -61,7 +60,7 @@ public class FolderMillGUI extends Application {
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("light-gray-bg");
-        root.setTop(createToolbar());
+        root.setTop(createToolbar(primaryStage));
         root.setLeft(createHotFoldersPanel());
         root.setCenter(createTasksPanel());
         root.setRight(createActionsPanel());
@@ -167,21 +166,31 @@ public class FolderMillGUI extends Application {
         return panel;
     }
 
-    private ToolBar createToolbar() {
+    private void showHotFolderManagerDialog(Stage primaryStage) {
+        HotFolderManagerDialog dialog = new HotFolderManagerDialog(primaryStage, folderRepo);
+        dialog.showAndWait();
+        loadRealData(); // Refresh the main UI after managing hot folders
+    }
+
+
+    private ToolBar createToolbar(Stage primaryStage) {
         Button addFolderBtn = createIconButton(FOLDER_ICON, "Add Folder", "icon-button-light");
         Button addTaskBtn = createIconButton(ADD_ICON, "Add Task", "icon-button-light");
         Button startBtn = createIconButton(PLAY_ICON, "Start/Pause", "icon-button-light");
         Button settingsBtn = createIconButton(SETTINGS_ICON, "Settings", "icon-button-light");
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search...");
 
+
+        // Event Handlers
         addFolderBtn.setOnAction(e -> selectFolder());
+        // Add new Task Button
         addTaskBtn.setOnAction(e -> showCreateTaskDialog());
+        // Start a Task
         startBtn.setOnAction(e -> toggleSelectedTask());
-        settingsBtn.setOnAction(e -> {/* Implement settings action */});
-        searchField.setOnAction(e -> {/* Implement search action */});
+        //Settings
+        settingsBtn.setOnAction(e -> showHotFolderManagerDialog(primaryStage));
 
-        ToolBar toolBar = new ToolBar(addFolderBtn, addTaskBtn, startBtn, settingsBtn, searchField);
+
+        ToolBar toolBar = new ToolBar(addFolderBtn, addTaskBtn, startBtn, settingsBtn);
         toolBar.getStyleClass().add("custom-toolbar");
         return toolBar;
     }
@@ -261,6 +270,13 @@ public class FolderMillGUI extends Application {
         return panel;
     }
 
+    private void toggleActionStatus(Action action) {
+        action.toggleStatus();
+        actionRepo.update(action);
+        Task selectedTask = tasksListView.getSelectionModel().getSelectedItem();
+        updateActionsListView(selectedTask);
+    }
+
     private Callback<ListView<Action>, ListCell<Action>> createActionCellFactory() {
         return listView -> new ListCell<Action>() {
             @Override
@@ -283,11 +299,10 @@ public class FolderMillGUI extends Application {
                             action.getStatus().equals("Active") ? "Pause" : "Start",
                             "icon-button-cells"
                     );
-                    toggleBtn.setOnAction(e -> {
-                        action.toggleStatus();
-                        actionRepo.update(action);
-                        updateItem(action, false);
-                    });
+
+                    // Toggle pause/unpause
+                    toggleBtn.setOnAction(e -> toggleActionStatus(action));
+
                     Button editButton = createIconButton(EDIT_ICON, "Edit", "edit-btn");
                     editButton.setOnAction(e -> showEditActionDialog(action));
                     Button deleteButton = createIconButton(DELETE_ICON, "Delete", "delete-btn");

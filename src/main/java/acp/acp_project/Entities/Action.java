@@ -3,6 +3,9 @@ package acp.acp_project.Entities;
 import acp.acp_project.Models.SelectedFileAndAction;
 import jakarta.persistence.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Entity
 public class Action {
     @Id
@@ -18,17 +21,37 @@ public class Action {
     @Embedded
     public SelectedFileAndAction selectedFileAndAction;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "action_parameters", joinColumns = @JoinColumn(name = "action_id"))
+    @MapKeyColumn(name = "parameter_name")
+    @Column(name = "parameter_value")
+    private Map<String, String> actionParameters;
+
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)
     private Task task;
 
-    public Action() {}
+    public Action() {
+        this.actionParameters = new HashMap<>();
+    }
 
     public Action(String name, String outputFolderName, boolean isActive, SelectedFileAndAction selectedFileAndAction) {
         this.actionName = name;
         this.outputFolderName = outputFolderName;
         this.isActive = isActive;
         this.selectedFileAndAction = selectedFileAndAction;
+    }
+
+    public void setActionParameter(String key, String value) {
+        this.actionParameters.put(key, value);
+    }
+
+    public String getActionParameter(String key) {
+        return this.actionParameters.get(key);
+    }
+
+    public Map<String, String> getActionParameters() {
+        return this.actionParameters;
     }
 
     public int getId() {

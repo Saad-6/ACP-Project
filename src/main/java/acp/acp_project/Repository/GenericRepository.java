@@ -1,5 +1,7 @@
 package acp.acp_project.Repository;
 
+import acp.acp_project.Entities.Action;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import acp.acp_project.DbContext.HibernateUtil;
@@ -44,6 +46,19 @@ public class GenericRepository<T> implements IGenericRepository<T> {
         Session session = HibernateUtil.getSessionFactory().openSession();
         try {
             return session.get(entityType, id);
+        } finally {
+            session.close();
+        }
+    }
+
+    public T getActionById(int id) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
+            T entity = session.get(entityType, id);
+            if (entity instanceof Action) {
+                Hibernate.initialize(((Action) entity).getActionParameters());
+            }
+            return entity;
         } finally {
             session.close();
         }

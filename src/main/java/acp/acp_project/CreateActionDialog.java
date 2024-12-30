@@ -4,15 +4,15 @@ import acp.acp_project.Entities.Action;
 import acp.acp_project.Models.*;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.paint.Color;
+import javafx.scene.layout.VBox;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CreateActionDialog extends Dialog<Action> {
@@ -21,19 +21,28 @@ public class CreateActionDialog extends Dialog<Action> {
     private ComboBox<String> fileTypeComboBox;
     private ComboBox<String> actionComboBox;
     private final Action existingAction;
+    private GridPane grid;
+    private Map<String, Control> dynamicFields;
+    private ScrollPane scrollPane;
 
     public CreateActionDialog(String taskOutputPath, Action action) {
         this.existingAction = action;
+        this.dynamicFields = new HashMap<>();
+
         setTitle(action == null ? "Create New Action" : "Edit Action");
         setHeaderText("Please enter the details for the action.");
 
         ButtonType actionButtonType = new ButtonType(action == null ? "Create" : "Save", ButtonBar.ButtonData.OK_DONE);
         getDialogPane().getButtonTypes().addAll(actionButtonType, ButtonType.CANCEL);
 
-        GridPane grid = new GridPane();
+        grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
-        grid.setPadding(new Insets(20, 150, 10, 10));
+        grid.setPadding(new Insets(20, 20, 10, 10));
+
+        scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
 
         nameField = new TextField();
         nameField.setPromptText("Action Name");
@@ -42,7 +51,7 @@ public class CreateActionDialog extends Dialog<Action> {
         outputFolderField.setText(taskOutputPath + "/[action-name]");
 
         fileTypeComboBox = new ComboBox<>();
-        fileTypeComboBox.getItems().addAll("All Files", "JPEG", "PNG", "JPG", "ZIP", "Word", "PDF", "Text");
+        fileTypeComboBox.getItems().addAll("All Files", "jpeg", "png", "jpg", "zip", "docx", "pdf", "txt");
         fileTypeComboBox.setValue("All Files");
         styleComboBox(fileTypeComboBox);
 
@@ -55,11 +64,14 @@ public class CreateActionDialog extends Dialog<Action> {
             fileTypeComboBox.setValue(action.selectedFileAndAction.selectedFileType);
             updateActionComboBox(action.selectedFileAndAction.selectedFileType);
             actionComboBox.setValue(action.selectedFileAndAction.selectedAction);
+            updateDynamicFields(action.selectedFileAndAction.selectedAction);
+            populateDynamicFields(action);
         } else {
             updateActionComboBox("All Files");
         }
 
         fileTypeComboBox.setOnAction(e -> updateActionComboBox(fileTypeComboBox.getValue()));
+        actionComboBox.setOnAction(e -> updateDynamicFields(actionComboBox.getValue()));
 
         grid.add(new Label("Name:"), 0, 0);
         grid.add(nameField, 1, 0);
@@ -70,24 +82,34 @@ public class CreateActionDialog extends Dialog<Action> {
         grid.add(new Label("Action:"), 0, 3);
         grid.add(actionComboBox, 1, 3);
 
-        getDialogPane().setContent(grid);
+        VBox contentBox = new VBox(scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        getDialogPane().setContent(contentBox);
+
+        getDialogPane().setMinHeight(300);
+        getDialogPane().setMinWidth(400);
+
         loadStylesheet();
 
         setResultConverter(dialogButton -> {
             if (dialogButton == actionButtonType) {
-                if (existingAction == null) {
-                    return new Action(
-                            nameField.getText(),
-                            outputFolderField.getText(),
-                            true,
-                            new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue())
-                    );
-                } else {
-                    existingAction.setActionName(nameField.getText());
-                    existingAction.setOutputFolder(outputFolderField.getText());
-                    existingAction.selectedFileAndAction = new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue());
-                    return existingAction;
+                Action resultAction = existingAction == null ? new Action() : existingAction;
+                resultAction.setActionName(nameField.getText());
+                resultAction.setOutputFolder(outputFolderField.getText());
+                resultAction.setIsActive(true);
+                resultAction.selectedFileAndAction = new SelectedFileAndAction(fileTypeComboBox.getValue(), actionComboBox.getValue());
+
+                for (Map.Entry<String, Control> entry : dynamicFields.entrySet()) {
+                    String value = "";
+                    if (entry.getValue() instanceof TextField) {
+                        value = ((TextField) entry.getValue()).getText();
+                    } else if (entry.getValue() instanceof ComboBox) {
+                        value = ((ComboBox<?>) entry.getValue()).getValue().toString();
+                    }
+                    resultAction.setActionParameter(entry.getKey(), value);
                 }
+
+                return resultAction;
             }
             return null;
         });
@@ -125,7 +147,6 @@ public class CreateActionDialog extends Dialog<Action> {
         }
     }
 
-
     private void updateActionComboBox(String fileType) {
         List<String> actions = new ArrayList<>(Arrays.stream(GenericActions.values())
                 .map(Enum::name)
@@ -134,25 +155,25 @@ public class CreateActionDialog extends Dialog<Action> {
         if (!fileType.equals("All Files")) {
             File selectedFile = null;
             switch (fileType) {
-                case "JPEG":
+                case "jpeg":
                     selectedFile = new jpegFile();
                     break;
-                case "JPG":
+                case "jpg":
                     selectedFile = new jpgFile();
                     break;
-                case "PNG":
+                case "png":
                     selectedFile = new pngFile();
                     break;
-                case "Word":
+                case "docx":
                     selectedFile = new wordFile();
                     break;
-                case "PDF":
+                case "pdf":
                     selectedFile = new pdfFile();
                     break;
-                case "Text":
+                case "txt":
                     selectedFile = new textFile();
                     break;
-                case "ZIP":
+                case "zip":
                     selectedFile = new zipFile();
                     break;
                 default:
@@ -176,7 +197,6 @@ public class CreateActionDialog extends Dialog<Action> {
                 specificActions = ((zipFile) selectedFile).specificActions;
             }
 
-
             actions.addAll(specificActions.stream()
                     .map(Enum::name)
                     .collect(Collectors.toList()));
@@ -187,5 +207,65 @@ public class CreateActionDialog extends Dialog<Action> {
             actionComboBox.setValue(actions.get(0));
         }
     }
-}
 
+    private void updateDynamicFields(String actionName) {
+        // Clear existing dynamic fields
+        for (Node node : new ArrayList<>(grid.getChildren())) {
+            if (GridPane.getRowIndex(node) >= 4) {
+                grid.getChildren().remove(node);
+            }
+        }
+        dynamicFields.clear();
+
+        // Add new dynamic fields based on the selected action
+        int row = 4;
+        switch (actionName) {
+            case "RENAME":
+                addTextField("Rename Pattern", row++);
+                break;
+            case "FIND_AND_REPLACE":
+                addTextField("Find", row++);
+                addTextField("Replace", row++);
+                break;
+            case "SEARCH_BY_KEYWORD":
+                addTextField("Keyword", row++);
+                break;
+            case "PRINT":
+                addComboBox("Print Quality", Arrays.asList("Draft", "Normal", "High"), row++);
+                break;
+            // Add more cases for other actions that require additional fields
+        }
+
+        // Adjust the dialog size after adding new fields
+        getDialogPane().getScene().getWindow().sizeToScene();
+    }
+
+    private void addTextField(String label, int row) {
+        Label fieldLabel = new Label(label + ":");
+        TextField textField = new TextField();
+        grid.add(fieldLabel, 0, row);
+        grid.add(textField, 1, row);
+        dynamicFields.put(label, textField);
+    }
+
+    private void addComboBox(String label, List<String> options, int row) {
+        Label fieldLabel = new Label(label + ":");
+        ComboBox<String> comboBox = new ComboBox<>(FXCollections.observableArrayList(options));
+        grid.add(fieldLabel, 0, row);
+        grid.add(comboBox, 1, row);
+        dynamicFields.put(label, comboBox);
+    }
+
+    private void populateDynamicFields(Action action) {
+        for (Map.Entry<String, String> entry : action.getActionParameters().entrySet()) {
+            Control control = dynamicFields.get(entry.getKey());
+            if (control instanceof TextField) {
+                ((TextField) control).setText(entry.getValue());
+            } else if (control instanceof ComboBox) {
+                @SuppressWarnings("unchecked")
+                ComboBox<String> comboBox = (ComboBox<String>) control;
+                comboBox.setValue(entry.getValue());
+            }
+        }
+    }
+}
