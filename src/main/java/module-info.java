@@ -3,7 +3,10 @@ module acp.acp_project {
     requires javafx.fxml;
     requires jakarta.persistence;
     requires org.hibernate.orm.core;
-    requires java.naming;
+    requires org.docx4j.core;
+    requires org.apache.pdfbox;
+    requires jakarta.xml.bind;
+    requires com.aspose.words;
 
     opens acp.acp_project to javafx.fxml;
 

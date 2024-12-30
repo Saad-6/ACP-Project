@@ -4,18 +4,35 @@ import acp.acp_project.Domain.Response;
 import acp.acp_project.Entities.Action;
 import acp.acp_project.Entities.HotFolder;
 import acp.acp_project.Entities.Task;
+import com.aspose.words.*;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Tooltip;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.wml.P;
+import org.docx4j.wml.R;
+import org.docx4j.wml.Text;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class Utility {
     public static final String FOLDER_ICON = "📁";
@@ -71,6 +88,8 @@ public class Utility {
         List<File> filesToBeSentToTheGulag = findFiles(rootDirectory,fileType);
         return filesToBeSentToTheGulag;
     }
+
+
     public static void ensureDirectoryExists(String destinationPath){
         File destinationDirectory = new File(destinationPath);
         if (!destinationDirectory.exists()) {
@@ -110,6 +129,24 @@ public class Utility {
 
         return matchingFiles;
     }
+
+
+
+    public static void processPdfDocument(File file, String find, String replace, String destinationPath) throws IOException {
+        PDDocument document = PDDocument.load(file);
+        PDFTextStripper stripper = new PDFTextStripper();
+        String content = stripper.getText(document);
+        content = content.replaceAll(Pattern.quote(find), replace);
+
+        // Write the modified content to a new text file
+        File outputFile = new File(destinationPath, file.getName().replace(".pdf", "_modified.txt"));
+        Files.write(outputFile.toPath(), content.getBytes());
+
+        document.close();
+    }
+
+
+
     public static String getExtensionFromFileName(String fileName) {
         switch (fileName.toLowerCase()) {
             case "jpeg":
@@ -121,6 +158,8 @@ public class Utility {
             case "zip":
                 return fileName.toLowerCase();
             case "word":
+                return "docx";
+            case "docx":
                 return "docx";
             case "pdf":
                 return "pdf";

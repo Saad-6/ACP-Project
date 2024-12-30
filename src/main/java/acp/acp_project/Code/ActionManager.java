@@ -1,27 +1,39 @@
 package acp.acp_project.Code;
 
-import acp.acp_project.Domain.Mover;
-import acp.acp_project.Domain.Response;
+import acp.acp_project.Domain.*;
 import acp.acp_project.Entities.Action;
 import acp.acp_project.Entities.Task;
 import acp.acp_project.Models.GenericActions;
 import acp.acp_project.Models.SpecificActions;
 import acp.acp_project.Repository.GenericRepository;
-
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import static acp.acp_project.UI.Utility.*;
 
 public class ActionManager {
 
+    // Repository
     private final GenericRepository<Action> actionRepo = new GenericRepository<>(Action.class);
+    // Return Response
     Response response = new Response();
+    // Helpers
+    WordHelper wordHelper = new WordHelper();
+    TextHelper textHelper = new TextHelper();
+    ZipHelper zipHelper = new ZipHelper();
+
     Mover mover = new Mover();
     List<File> files = new ArrayList<>();
 
@@ -80,7 +92,7 @@ public class ActionManager {
             case COPY:
                 return copyFiles(action);
             case DELETE:
-                return deleteFiles(action);
+                return deleteFiles();
             case RENAME:
                 return renameFiles(action);
             case COMPRESS:
@@ -141,6 +153,7 @@ public class ActionManager {
         String destinationPath = action.getOutputFolder();
         ensureDirectoryExists(destinationPath);
 
+
         for (File file : files) {
             try {
                 Path source = file.toPath();
@@ -152,7 +165,7 @@ public class ActionManager {
                 return response;
             }
         }
-        response.Message = "Files moved successfully.";
+        response.Message = files.size() + "Files moved .";
         return response;
     }
 
@@ -170,11 +183,11 @@ public class ActionManager {
                 return response;
             }
         }
-        response.Message = "Files copied successfully.";
+        response.Message = files.size() + "Files copied.";
         return response;
     }
 
-    private Response deleteFiles(Action action) {
+    private Response deleteFiles() {
         for (File file : files) {
             if (!file.delete()) {
                 response.success = false;
@@ -182,7 +195,7 @@ public class ActionManager {
                 return response;
             }
         }
-        response.Message = "Files deleted successfully.";
+        response.Message = files.size() + "Files deleted successfully.";
         return response;
     }
 
@@ -210,47 +223,124 @@ public class ActionManager {
             }
         }
         response.success = true;
-        response.Message = "Files renamed successfully.";
+        response.Message = files.size() + "Files renamed successfully.";
         return response;
     }
 
 
-    private Response compressFiles(Action action) {
-        // Implement compress files logic
-        response.Message = "File compression not implemented yet.";
+    public Response compressFiles(Action action) {
+
+        Response response = new Response();
+
+        String outputFolderPath = action.outputFolderName;
+        ensureDirectoryExists(outputFolderPath);
+        Path outputFolder = Paths.get(outputFolderPath);
+        Path outputZipFilePath = outputFolder.resolve("compressed_files.zip");
+
+        response = zipHelper.Compress(files,outputZipFilePath);
+
         return response;
     }
 
     private Response findAndReplace(Action action) {
+
         String find = action.getActionParameter("Find");
         String replace = action.getActionParameter("Replace");
         String destinationPath = action.getOutputFolder();
         ensureDirectoryExists(destinationPath);
+
         for (File file : files) {
+
+            String fileName = file.getName().toLowerCase();
+
             try {
-                String content = new String(Files.readAllBytes(file.toPath()));
-                content = content.replaceAll(Pattern.quote(find), replace);
-                Path destination = Paths.get(destinationPath, file.getName());
-                Files.write(destination, content.getBytes());
-            } catch (IOException e) {
+
+                if (fileName.endsWith(".docx")) {
+
+                    wordHelper.findAndReplaceInWord(file, find, replace, destinationPath);
+
+                } else if (fileName.endsWith(".txt")) {
+
+                    textHelper.findAndReplaceTextDocument(file, find, replace, destinationPath);
+
+                } else {
+                    // Skip unsupported file types
+                    continue;
+                }
+            } catch (Exception e) {
+
                 response.success = false;
                 response.Message = "Error processing file: " + file.getName() + ". " + e.getMessage();
                 return response;
+
             }
         }
+
         response.Message = "Find and replace completed successfully.";
         return response;
     }
 
+
+
     private Response mergeFiles(Action action) {
-        // Implement merge files logic
-        response.Message = "File merging not implemented yet.";
+
+        String outputFolderPath = action.outputFolderName;
+        String fileType = action.selectedFileAndAction.selectedFileType;
+
+        if(fileType.equals("docx")){
+
+            wordHelper.mergeWordDocuments(files.toArray(new File[0]),outputFolderPath);
+
+        }else if(fileType.equals("pdf")){
+
+            response.Message = "not implemented";
+            return response;
+
+        } else if (fileType.equals("txt")) {
+
+            try {
+
+            response = textHelper.mergeAllTextFiles(files,outputFolderPath);
+
+            }
+            catch (IOException ex){
+
+                response.Message = ex.getMessage();
+
+            }
+
+            return response;
+
+        }else{
+
+            response.Message = "not implemented";
+            return response;
+
+        }
+
+        response.Message = files.size() + "file merged.";
         return response;
     }
 
     private Response convertToWord(Action action) {
-        // Implement convert to Word logic
-        response.Message = "Convert to Word not implemented yet.";
+
+        String outputFolderPath = action.outputFolderName;
+        String fileType = action.selectedFileAndAction.selectedFileType;
+
+        if(fileType.equals("pdf")){
+
+            response.Message = "not implemented";
+            return response;
+
+        } else if (fileType.equals("txt")) {
+
+                response = textHelper.textToWord(files,outputFolderPath);
+
+            return response;
+
+        }
+
+        response.Message = "Not Supported.";
         return response;
     }
 
@@ -261,14 +351,61 @@ public class ActionManager {
     }
 
     private Response convertToPdf(Action action) {
-        // Implement convert to PDF logic
-        response.Message = "Convert to PDF not implemented yet.";
+
+        String destinationPath = action.getOutputFolder();
+        ensureDirectoryExists(destinationPath);
+
+
+        for (File file : files) {
+
+            String fileName = file.getName().toLowerCase();
+
+            try {
+
+                if (fileName.endsWith(".docx")) {
+
+                    wordHelper.word2Pdf(file,destinationPath);
+
+                } else if (fileName.endsWith(".png")) {
+
+                    response.Message ="Not yet implemented";
+                    return  response;
+
+                } else if (fileName.endsWith(".txt")) {
+
+                    response = textHelper.textToPdf(files,destinationPath);
+                    return  response;
+
+                } else {
+                    // Skip unsupported file types
+                    continue;
+                }
+            } catch (Exception e) {
+
+                response.success = false;
+                response.Message = "Error processing file: " + file.getName() + ". " + e.getMessage();
+                return response;
+
+            }
+        }
+
+        response.Message = files.size() + "Converted to PDF.";
         return response;
     }
 
     private Response convertToText(Action action) {
-        // Implement convert to text logic
-        response.Message = "Convert to text not implemented yet.";
+        String fileType = action.selectedFileAndAction.selectedFileType;
+        if(fileType.equals("docx")){
+            wordHelper.wordToText(action,files);
+        }else if(fileType.equals("pdf")){
+
+        }else{
+            response.Message =  "File type not supported.";
+            return response;
+        }
+
+
+        response.Message = files.size() + "Converted to text.";
         return response;
     }
 
@@ -297,43 +434,18 @@ public class ActionManager {
     }
 
     private Response searchByKeyword(Action action) {
-        String keyword = action.getActionParameter("Keyword");
-        String destinationPath = action.getOutputFolder();
-        ensureDirectoryExists(destinationPath);
-        List<File> matchingFiles = new ArrayList<>();
-        for (File file : files) {
-            try {
-                String content = new String(Files.readAllBytes(file.toPath()));
-                if (content.contains(keyword)) {
-                    matchingFiles.add(file);
-                }
-            } catch (IOException e) {
-                response.success = false;
-                response.Message = "Error searching file: " + file.getName() + ". " + e.getMessage();
-                return response;
-            }
-        }
-
-        // Copy matching files to destination
-        for (File matchingFile : matchingFiles) {
-            try {
-                Path source = matchingFile.toPath();
-                Path destination = Paths.get(destinationPath, matchingFile.getName());
-                Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-                response.success = false;
-                response.Message = "Error copying matching file: " + matchingFile.getName() + ". " + e.getMessage();
-                return response;
-            }
-        }
-
-        response.Message = "Search by keyword completed. Found " + matchingFiles.size() + " matching files.";
+      response = textHelper.searchByKeyword(action,files);
         return response;
     }
 
     private Response extractFiles(Action action) {
-        // Implement extract files logic
-        response.Message = "Extract files not implemented yet.";
+
+        String outputFolderPath = action.outputFolderName;
+        ensureDirectoryExists(outputFolderPath);
+        Path outputFolder = Paths.get(outputFolderPath);
+
+        response = zipHelper.Extract(files,outputFolder,outputFolderPath);
+
         return response;
     }
 
@@ -369,8 +481,29 @@ public class ActionManager {
 
     private Response printFiles(Action action) {
         String printQuality = action.getActionParameter("Print Quality");
-        // Implement printing logic here based on the print quality
-        // This is a placeholder implementation
+        String fileType = action.selectedFileAndAction.selectedFileType;
+
+        if(fileType.equals("docx")){
+
+            wordHelper.printWordDocuments(files.toArray(new File[0]));
+
+        }else if(fileType.equals("pdf")){
+
+            response.Message = "not implemented";
+            return response;
+
+        } else if (fileType.equals("txt")) {
+
+            textHelper.printTextDocuments(files);
+            return response;
+
+        }else{
+
+            response.Message = "not supported";
+            return response;
+
+        }
+
         response.Message = "Print job sent with quality: " + printQuality;
         return response;
     }
